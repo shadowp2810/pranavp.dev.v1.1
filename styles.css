@@ -60,3 +60,14 @@ body {
     padding: 20px;
   }
 }
+
+#ufo {
+  position: absolute; /* Allows it to move freely around the screen */
+  top: 0; /* Initial position */
+  left: -100px; /* Start off-screen on the left */
+  font-size: 40px; /* Size of the UFO emoji */
+  z-index: -1; /* Ensure it appears above other elements */
+  pointer-events: none; /* Prevent interaction with the emoji */
+  transition: transform linear; /* Smooth movement */
+  opacity: 0.2;
+}
