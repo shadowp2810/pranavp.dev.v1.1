@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pranav Pradeep - Resume</title>
+    <script>
+      if (localStorage.getItem("dark-mode") === "enabled") {
+        document.documentElement.classList.add("dark-mode");
+      }
+    </script>
+    <style>
+      #theme-toggle {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        width: 40px;
+        height: 40px;
+        cursor: pointer;
+        border: 2px solid #0077b5;
+        border-radius: 50%;
+        background-color: #78cbf8;
+        color: #f9f9f9;
+        font-size: 20px;
+        z-index: 1000;
+        transition: background-color 0.3s ease, color 0.3s ease;
+        animation: fadeIn 1s ease-in-out;
+      }
+      #theme-toggle:hover {
+        background-color: #0077b5;
+        transform: scale(1.1);
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(0px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+    </style>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <button id="theme-toggle" aria-label="Toggle Dark Mode">
+      <span id="theme-icon">🌙</span>
+    </button>
+    <div class="container">
+      <header class="header">
+        <h1>
+          Hi, I'm
+          <strong>Pranav</strong>!
+        </h1>
+        <p>
+          <strong> Value Creator and Problem Solver 🚀 </strong>
+        </p>
+      </header>
+
+      <div class="links">
+        <a href="Pranav-Pradeep-Resume.pdf" target="_blank"
+          >Download Resume (PDF)</a
+        >
+        <a href="https://linkedin.com/in/p4810" target="_blank">LinkedIn</a>
+        <a href="mailto:pranavp4810@gmail.com">pranavp4810@gmail.com</a>
+        <a href="tel:+14165263718">+1 (416) 526-3718</a>
+      </div>
+    </div>
+    <script src="script.js"></script>
+  </body>
+</html>
