@@ -7,6 +7,7 @@ let ballY = canvas.height - 30;
 let ballDX = 3.5;
 let ballDY = 3.5;
 const ballRadius = 10;
+const halfBallRadius = ballRadius / 2;
 
 // Paddle properties
 const paddleHeight = 10;
@@ -28,7 +29,7 @@ const bricks = [];
 for (let c = 0; c < brickColumnCount; c++) {
   bricks[c] = [];
   for (let r = 0; r < brickRowCount; r++) {
-    bricks[c][r] = { x: 0, y: 0, status: 1 }; // status 1 = visible, 0 = broken
+    bricks[c][r] = { x: 0, y: 0, status: 1, indestructible: false }; // Add indestructible property
   }
 }
 
@@ -46,6 +47,7 @@ let leftPressed = false;
 // Touch controls
 const leftBtn = document.getElementById("leftBtn");
 const rightBtn = document.getElementById("rightBtn");
+
 // Cross-device event handling for left button
 leftBtn.addEventListener("mousedown", (e) => {
   e.preventDefault();
@@ -63,6 +65,7 @@ leftBtn.addEventListener("touchend", (e) => {
   e.preventDefault();
   leftPressed = false;
 });
+
 // Cross-device event handling for right button
 rightBtn.addEventListener("mousedown", (e) => {
   e.preventDefault();
@@ -100,6 +103,24 @@ function keyUpHandler(e) {
   }
 }
 
+// Randomly make one brick indestructible
+function setIndestructibleBrick() {
+  // Reset all bricks to normal
+  for (let c = 0; c < brickColumnCount; c++) {
+    for (let r = 0; r < brickRowCount; r++) {
+      bricks[c][r].indestructible = false;
+    }
+  }
+
+  // Randomly select a brick
+  const randomColumn = Math.floor(Math.random() * brickColumnCount);
+  const randomRow = Math.floor(Math.random() * brickRowCount);
+  bricks[randomColumn][randomRow].indestructible = true;
+
+  // Repeat this process every 3 seconds
+  setTimeout(setIndestructibleBrick, 5000);
+}
+
 // Draw ball
 function drawBall() {
   ctx.beginPath();
@@ -128,9 +149,12 @@ function drawBricks() {
         const brickY = r * (brickHeight + brickPadding) + brickOffsetTop;
         bricks[c][r].x = brickX;
         bricks[c][r].y = brickY;
+
         ctx.beginPath();
         ctx.rect(brickX, brickY, brickWidth, brickHeight);
-        ctx.fillStyle = "#fff";
+
+        // Change color if the brick is indestructible
+        ctx.fillStyle = b.indestructible ? "#ff0000" : "#fff"; // Red for indestructible, white for normal
         ctx.fill();
         ctx.closePath();
       }
@@ -144,21 +168,50 @@ function collisionDetection() {
     for (let r = 0; r < brickRowCount; r++) {
       const b = bricks[c][r];
       if (b.status === 1) {
+        // Check if the ball is within the brick's bounding box
         if (
-          ballX > b.x &&
-          ballX < b.x + brickWidth &&
-          ballY > b.y &&
-          ballY < b.y + brickHeight
+          ballX + halfBallRadius > b.x && // Ball's right edge is past the brick's left edge
+          ballX - halfBallRadius < b.x + brickWidth && // Ball's left edge is before the brick's right edge
+          ballY + halfBallRadius > b.y && // Ball's bottom edge is past the brick's top edge
+          ballY - halfBallRadius < b.y + brickHeight // Ball's top edge is before the brick's bottom edge
         ) {
-          ballDY = -ballDY; // Reverse ball direction
-          b.status = 0; // Mark the brick as broken
-          score++; // Increase score
-          updateScore();
+          if (b.indestructible) {
+            // Indestructible brick: Use side collision detection
+            const ballBottom = ballY + ballRadius;
+            const ballTop = ballY - ballRadius;
+            const ballRight = ballX + ballRadius;
+            const ballLeft = ballX - ballRadius;
 
-          // Regenerate the brick after 2 seconds
-          setTimeout(() => {
-            b.status = 1; // Make the brick visible again
-          }, 2000);
+            const brickBottom = b.y + brickHeight;
+            const brickTop = b.y;
+            const brickRight = b.x + brickWidth;
+            const brickLeft = b.x;
+
+            // Check if the collision is on the top or bottom of the brick
+            if (ballBottom > brickTop && ballTop < brickTop) {
+              ballDY = -ballDY; // Reverse vertical direction (top collision)
+            } else if (ballTop < brickBottom && ballBottom > brickBottom) {
+              ballDY = -ballDY; // Reverse vertical direction (bottom collision)
+            }
+
+            // Check if the collision is on the left or right of the brick
+            if (ballRight > brickLeft && ballLeft < brickLeft) {
+              ballDX = -ballDX; // Reverse horizontal direction (left collision)
+            } else if (ballLeft < brickRight && ballRight > brickRight) {
+              ballDX = -ballDX; // Reverse horizontal direction (right collision)
+            }
+          } else {
+            // Normal brick: Simple collision logic
+            ballDY = -ballDY; // Reverse vertical direction
+            b.status = 0; // Mark the brick as broken
+            score++; // Increase score
+            updateScore();
+
+            // Regenerate the brick after 2 seconds
+            setTimeout(() => {
+              b.status = 1; // Make the brick visible again
+            }, 3000);
+          }
         }
       }
     }
@@ -237,9 +290,11 @@ function draw() {
 // Pause/Resume button
 document.getElementById("pauseResumeBtn").addEventListener("click", () => {
   isPaused = !isPaused;
+
   document.getElementById("pauseResumeBtn").textContent = isPaused
     ? "Resume"
     : "Pause";
+
   if (!isPaused) draw();
 });
 
@@ -253,5 +308,7 @@ document.getElementById("homeBtn").addEventListener("click", () => {
   window.location.href = "/";
 });
 
+// Initialize the game
+setIndestructibleBrick();
 startTimer();
 draw();
