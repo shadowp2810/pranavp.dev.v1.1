@@ -40,7 +40,7 @@ function startUFOAnimation() {
     moveUFO();
 
     // Wait for the UFO to finish its journey before scheduling the next flight
-    const randomDelay = Math.random() * 5000 + 2000; // Random delay between 1s and 3s
+    const randomDelay = Math.random() * 4000 + 2000; // Random delay between 1s and 3s
     const randomSpeed = parseFloat(ufo.style.transitionDuration) * 1000; // Current flight duration
     setTimeout(fly, randomSpeed + randomDelay); // Schedule the next flight
   }
