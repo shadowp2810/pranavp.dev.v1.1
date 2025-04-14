@@ -1,0 +1,126 @@
+/* General styles */
+body {
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  background-color: #222;
+  color: #fff;
+  font-family: Arial, sans-serif;
+}
+
+/* Canvas styles */
+canvas {
+  border: 2px solid #fff;
+  background-color: #000;
+  width: 90%;
+  max-width: 480px;
+  aspect-ratio: 3 / 2;
+}
+
+/* Button styles */
+button {
+  margin: 5px;
+  padding: 10px 20px;
+  font-size: 16px;
+  cursor: pointer;
+  border: none;
+  border-radius: 5px;
+  background-color: #0077b5;
+  color: #fff;
+  transition: background-color 0.3s ease;
+}
+
+button:hover {
+  background-color: #005f8b;
+}
+
+/* Controls container */
+#controls {
+  margin-top: 10px;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+/* Info section (time and score) */
+#info {
+  display: flex;
+  justify-content: space-between;
+  width: 90%;
+  max-width: 480px;
+  margin-top: 10px;
+  font-size: 18px;
+}
+
+/* Message (e.g., Game Over) */
+#message {
+  font-size: 20px;
+  font-weight: bold;
+  margin-top: 20px;
+  color: red;
+  visibility: hidden;
+  height: 30px;
+}
+
+/* Touch controls */
+.touch-controls {
+  display: flex;
+  justify-content: space-between;
+  width: 90%;
+  max-width: 480px;
+  margin-top: 10px;
+}
+
+.touch-controls button {
+  flex: 1;
+  padding: 15px;
+  font-size: 18px;
+}
+
+/* Theme toggle button */
+#theme-toggle {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  width: 40px;
+  height: 40px;
+  cursor: pointer;
+  border: 2px solid #0077b5;
+  border-radius: 50%;
+  background-color: #78cbf8;
+  color: #f9f9f9;
+  font-size: 20px;
+  z-index: 1000;
+  transition: background-color 0.3s ease, color 0.3s ease;
+  animation: fadeIn 1s ease-in-out;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  line-height: 1;
+}
+
+#theme-toggle:hover {
+  background-color: #0077b5;
+  transform: scale(1.1);
+}
+
+#theme-icon {
+  display: inline-block;
+  line-height: 1;
+}
+
+/* Fade-in animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(0px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
