@@ -18,6 +18,10 @@ h1 {
   color: #fff;
 }
 
+button {
+  user-select: none; /* Prevent text selection */
+}
+
 /* Game container */
 #game-container {
   display: flex;
@@ -32,11 +36,12 @@ h1 {
 #controls {
   margin-top: 10px;
   display: flex;
+  justify-content: center;
   gap: 10px;
 }
 
 #controls button {
-  padding: 10px 20px;
+  padding: 10px 15px;
   font-size: 1rem;
   border: none;
   border-radius: 5px;
@@ -58,4 +63,48 @@ h1 {
   visibility: hidden; /* Hidden by default */
   height: 1.5em; /* Reserve space to prevent layout shift */
   text-align: center;
+}
+
+/* Touch Controls */
+#touch-controls {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px; /* Space between rows */
+  width: 100%; /* Ensure the touch controls container spans the full width */
+}
+
+#touch-controls .row {
+  display: flex;
+  justify-content: space-between;
+  width: 90%; /* Rows take up 90% of the screen width */
+  max-width: 460px; /* Maximum width for desktop */
+  gap: 10px; /* Space between buttons */
+}
+
+#touch-controls button {
+  flex: 1; /* Buttons fill the available space evenly */
+  padding: 15px 0; /* Adjust padding for a good touch target size */
+  font-size: 1.2rem;
+  border: none;
+  border-radius: 5px;
+  background-color: #0077b5;
+  color: #fff;
+  cursor: pointer;
+  user-select: none;
+  text-align: center;
+  height: 60px; /* Ensure a consistent height for all buttons */
+  min-width: 60px; /* Ensure buttons have a minimum width */
+}
+
+#touch-controls button:active {
+  background-color: #005f8b;
+}
+
+/* Fire Button (Single Button Row) */
+#fireBtn {
+  flex: none; /* Prevent stretching */
+  width: 100%; /* Fire button takes the full width of the row */
+  height: 60px; /* Match the height of other buttons */
 }

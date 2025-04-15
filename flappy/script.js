@@ -5,10 +5,7 @@ const ctx = canvas.getContext("2d");
 const UFO_SIZE = 20;
 const BRICK_WIDTH = 40;
 const BRICK_HEIGHT = 20;
-const BRICK_SPEED = 2; // Constant speed of the board
-const UFO_BASE_SPEED = BRICK_SPEED / 2; // UFO moves half the board's speed by default
-const UFO_ACCELERATION = BRICK_SPEED; // UFO matches board's speed when forward key is pressed
-const UFO_BACKWARD_SPEED = -BRICK_SPEED; // UFO moves backward at board speed when backward key is pressed
+const BRICK_SPEED = 2; // Constant speed of the bricks
 const BULLET_SPEED = 5; // Speed of the laser bullet
 const BULLET_WIDTH = 5; // Width of the bullet
 const BULLET_HEIGHT = 5; // Height of the bullet
@@ -16,18 +13,23 @@ const BULLET_HEIGHT = 5; // Height of the bullet
 // Game state
 let ufoX = 50; // UFO's horizontal position
 let ufoY = canvas.height / 2 - UFO_SIZE / 2; // UFO's vertical position
-let ufoSpeed = UFO_BASE_SPEED; // UFO's default speed
-let bricks = []; // Array to store bricks
 let bullets = []; // Array to store bullets
+let bricks = []; // Array to store bricks
 let isGameOver = false;
 let isPaused = false;
 let score = 0;
+
+// Perspective state
+let currentPerspective = 0; // 0: Right-to-Left, 1: Left-to-Right, 2: Bottom-to-Top, 3: Top-to-Bottom
 
 // Controls state
 let movingUp = false;
 let movingDown = false;
 let movingForward = false;
 let movingBackward = false;
+
+let brickSpawnInterval; // Store the interval ID for spawning bricks
+let gameLoopId; // Store the ID for the game loop (requestAnimationFrame)
 
 // Event listeners for keyboard controls
 document.addEventListener("keydown", (e) => {
@@ -45,10 +47,11 @@ document.addEventListener("keyup", (e) => {
   if (e.code === "ArrowLeft") movingBackward = false;
 });
 
-// Event listeners for pause/resume, restart, and home buttons
+// Event listeners for pause/resume, restart, home, and perspective buttons
 const pauseResumeBtn = document.getElementById("pauseResumeBtn");
 const restartBtn = document.getElementById("restartBtn");
 const homeBtn = document.getElementById("homeBtn");
+const changePerspectiveBtn = document.getElementById("changePerspectiveBtn");
 
 pauseResumeBtn.addEventListener("click", () => {
   isPaused = !isPaused;
@@ -57,29 +60,121 @@ pauseResumeBtn.addEventListener("click", () => {
 });
 
 restartBtn.addEventListener("click", () => {
-  document.location.reload(); // Reload the game
+  restartGame(); // Restart the game
 });
 
 homeBtn.addEventListener("click", () => {
   window.location.href = "/"; // Navigate to home
 });
 
+changePerspectiveBtn.addEventListener("click", () => {
+  currentPerspective = (currentPerspective + 1) % 4; // Cycle through 0, 1, 2, 3
+  restartGame(); // Restart the game with the new perspective
+});
+
+// Touch Controls
+const upBtn = document.getElementById("upBtn");
+const downBtn = document.getElementById("downBtn");
+const leftBtn = document.getElementById("leftBtn");
+const rightBtn = document.getElementById("rightBtn");
+const fireBtn = document.getElementById("fireBtn");
+
+// Add event listeners for touch buttons
+upBtn.addEventListener("mousedown", () => (movingUp = true));
+upBtn.addEventListener("mouseup", () => (movingUp = false));
+downBtn.addEventListener("mousedown", () => (movingDown = true));
+downBtn.addEventListener("mouseup", () => (movingDown = false));
+leftBtn.addEventListener("mousedown", () => (movingBackward = true));
+leftBtn.addEventListener("mouseup", () => (movingBackward = false));
+rightBtn.addEventListener("mousedown", () => (movingForward = true));
+rightBtn.addEventListener("mouseup", () => (movingForward = false));
+fireBtn.addEventListener("mousedown", shootBullet);
+
+// Add support for touch events (for mobile devices)
+upBtn.addEventListener("touchstart", () => (movingUp = true));
+upBtn.addEventListener("touchend", () => (movingUp = false));
+downBtn.addEventListener("touchstart", () => (movingDown = true));
+downBtn.addEventListener("touchend", () => (movingDown = false));
+leftBtn.addEventListener("touchstart", () => (movingBackward = true));
+leftBtn.addEventListener("touchend", () => (movingBackward = false));
+rightBtn.addEventListener("touchstart", () => (movingForward = true));
+rightBtn.addEventListener("touchend", () => (movingForward = false));
+fireBtn.addEventListener("touchstart", shootBullet);
+
+// Function to restart the game
+function restartGame() {
+  // Reset game state
+  bullets = [];
+  bricks = [];
+  isGameOver = false;
+  score = 0;
+  isPaused = false;
+  pauseResumeBtn.textContent = "Pause";
+
+  // Set UFO starting position based on perspective
+  if (currentPerspective === 0) {
+    // Right-to-Left
+    ufoX = 50;
+    ufoY = canvas.height / 2 - UFO_SIZE / 2;
+  } else if (currentPerspective === 1) {
+    // Left-to-Right
+    ufoX = canvas.width - 50 - UFO_SIZE;
+    ufoY = canvas.height / 2 - UFO_SIZE / 2;
+  } else if (currentPerspective === 2) {
+    // Top-to-Bottom
+    ufoX = canvas.width / 2 - UFO_SIZE / 2;
+    ufoY = 50;
+  } else if (currentPerspective === 3) {
+    // Bottom-to-Top
+    ufoX = canvas.width / 2 - UFO_SIZE / 2;
+    ufoY = canvas.height - 50 - UFO_SIZE;
+  }
+
+  // Clear the existing brick spawn interval
+  clearInterval(brickSpawnInterval);
+  // Start a new brick spawn interval
+  brickSpawnInterval = setInterval(spawnBrick, 2000);
+  // Stop the existing game loop
+  cancelAnimationFrame(gameLoopId);
+  // Restart the game loop
+  gameLoop();
+}
+
 // Function to spawn bricks
 function spawnBrick() {
   if (isGameOver || isPaused) return;
 
-  const brickY = Math.random() * (canvas.height - BRICK_HEIGHT);
-  bricks.push({ x: canvas.width, y: brickY });
+  let brickX, brickY;
+
+  // Adjust brick dimensions based on perspective
+  let brickWidth = BRICK_WIDTH;
+  let brickHeight = BRICK_HEIGHT;
+  if (currentPerspective === 2 || currentPerspective === 3) {
+    // Vertical perspectives: Make bricks taller
+    brickWidth = BRICK_HEIGHT; // Swap width and height
+    brickHeight = BRICK_WIDTH;
+  }
+
+  if (currentPerspective === 0 || currentPerspective === 1) {
+    // Horizontal perspectives
+    brickY = Math.random() * (canvas.height - brickHeight);
+    brickX = currentPerspective === 0 ? canvas.width : -brickWidth; // Spawn on the right (0) or left (1)
+  } else {
+    // Vertical perspectives
+    brickX = Math.random() * (canvas.width - brickWidth);
+    brickY = currentPerspective === 2 ? canvas.height : -brickHeight; // Spawn at the bottom (2) or top (3)
+  }
+
+  bricks.push({ x: brickX, y: brickY, width: brickWidth, height: brickHeight });
 }
 
 // Function to shoot a laser bullet
 function shootBullet() {
   if (isGameOver || isPaused) return;
 
-  // Create a new bullet at the UFO's position
   bullets.push({
-    x: ufoX + UFO_SIZE, // Start at the right edge of the UFO
-    y: ufoY + UFO_SIZE / 2 - BULLET_HEIGHT / 2, // Centered vertically with the UFO
+    x: ufoX + UFO_SIZE / 2 - BULLET_WIDTH / 2,
+    y: ufoY + UFO_SIZE / 2 - BULLET_HEIGHT / 2,
   });
 }
 
@@ -87,53 +182,71 @@ function shootBullet() {
 function update() {
   if (isGameOver || isPaused) return;
 
-  // Adjust UFO speed based on controls
-  if (movingForward) {
-    ufoSpeed = BRICK_SPEED; // Match board speed when forward key is pressed
-  } else if (movingBackward) {
-    ufoSpeed = UFO_BACKWARD_SPEED; // Move backward at board speed
-  } else {
-    ufoSpeed = UFO_BASE_SPEED; // Default speed (half the board speed)
-  }
-
   // Move UFO
   if (movingUp && ufoY > 0) ufoY -= BRICK_SPEED; // Move up
   if (movingDown && ufoY < canvas.height - UFO_SIZE) ufoY += BRICK_SPEED; // Move down
-  ufoX += ufoSpeed; // Move horizontally based on calculated speed
+  if (movingForward && ufoX < canvas.width - UFO_SIZE) ufoX += BRICK_SPEED; // Move right
+  if (movingBackward && ufoX > 0) ufoX -= BRICK_SPEED; // Move left
 
   // Keep UFO within bounds
   if (ufoX < 0) ufoX = 0;
   if (ufoX > canvas.width - UFO_SIZE) ufoX = canvas.width - UFO_SIZE;
+  if (ufoY < 0) ufoY = 0;
+  if (ufoY > canvas.height - UFO_SIZE) ufoY = canvas.height - UFO_SIZE;
 
   // Move bricks
   for (let i = 0; i < bricks.length; i++) {
-    bricks[i].x -= BRICK_SPEED;
+    if (currentPerspective === 0) bricks[i].x -= BRICK_SPEED; // Right-to-Left
+    else if (currentPerspective === 1)
+      bricks[i].x += BRICK_SPEED; // Left-to-Right
+    else if (currentPerspective === 2)
+      bricks[i].y -= BRICK_SPEED; // Bottom-to-Top
+    else if (currentPerspective === 3) bricks[i].y += BRICK_SPEED; // Top-to-Bottom
 
     // Check for collision with UFO
+    const brick = bricks[i]; // Get the current brick
     if (
-      ufoX < bricks[i].x + BRICK_WIDTH &&
-      ufoX + UFO_SIZE > bricks[i].x &&
-      ufoY < bricks[i].y + BRICK_HEIGHT &&
-      ufoY + UFO_SIZE > bricks[i].y
+      ufoX < brick.x + brick.width &&
+      ufoX + UFO_SIZE > brick.x &&
+      ufoY < brick.y + brick.height &&
+      ufoY + UFO_SIZE > brick.y
     ) {
       gameOver();
     }
   }
 
   // Remove bricks that are off-screen
-  bricks = bricks.filter((brick) => brick.x + BRICK_WIDTH > 0);
+  bricks = bricks.filter((brick) => {
+    if (currentPerspective === 0) return brick.x + BRICK_WIDTH > 0; // Right-to-Left
+    if (currentPerspective === 1) return brick.x < canvas.width; // Left-to-Right
+    if (currentPerspective === 2) return brick.y + BRICK_HEIGHT > 0; // Bottom-to-Top
+    if (currentPerspective === 3) return brick.y < canvas.height; // Top-to-Bottom
+  });
 
   // Move bullets
   for (let i = 0; i < bullets.length; i++) {
-    bullets[i].x += BULLET_SPEED;
+    if (currentPerspective === 0) {
+      // Right-to-Left Perspective
+      bullets[i].x += BULLET_SPEED; // Bullets move left to right
+    } else if (currentPerspective === 1) {
+      // Left-to-Right Perspective
+      bullets[i].x -= BULLET_SPEED; // Bullets move right to left
+    } else if (currentPerspective === 2) {
+      // Bottom-to-Top Perspective
+      bullets[i].y += BULLET_SPEED; // Bullets move top to bottom
+    } else if (currentPerspective === 3) {
+      // Top-to-Bottom Perspective
+      bullets[i].y -= BULLET_SPEED; // Bullets move bottom to top
+    }
 
     // Check for collision with bricks
     for (let j = 0; j < bricks.length; j++) {
+      const brick = bricks[j]; // Get the current brick
       if (
-        bullets[i].x < bricks[j].x + BRICK_WIDTH &&
-        bullets[i].x + BULLET_WIDTH > bricks[j].x &&
-        bullets[i].y < bricks[j].y + BRICK_HEIGHT &&
-        bullets[i].y + BULLET_HEIGHT > bricks[j].y
+        bullets[i].x < brick.x + brick.width &&
+        bullets[i].x + BULLET_WIDTH > brick.x &&
+        bullets[i].y < brick.y + brick.height &&
+        bullets[i].y + BULLET_HEIGHT > brick.y
       ) {
         // Destroy the brick and the bullet
         bricks.splice(j, 1); // Remove the brick
@@ -145,10 +258,24 @@ function update() {
   }
 
   // Remove bullets that are off-screen
-  bullets = bullets.filter((bullet) => bullet.x < canvas.width);
+  bullets = bullets.filter((bullet) => {
+    if (currentPerspective === 0) return bullet.x > 0; // Right-to-Left
+    if (currentPerspective === 1) return bullet.x < canvas.width; // Left-to-Right
+    if (currentPerspective === 2) return bullet.y > 0; // Bottom-to-Top
+    if (currentPerspective === 3) return bullet.y < canvas.height; // Top-to-Bottom
+  });
 
   // Update score
   score++;
+}
+
+// Function to draw bricks
+function drawBricks() {
+  ctx.fillStyle = "#f00"; // Red bricks
+  for (let i = 0; i < bricks.length; i++) {
+    const brick = bricks[i];
+    ctx.fillRect(brick.x, brick.y, brick.width, brick.height);
+  }
 }
 
 // Function to draw the game
@@ -163,10 +290,7 @@ function draw() {
   ctx.fillRect(ufoX, ufoY, UFO_SIZE, UFO_SIZE);
 
   // Draw bricks
-  ctx.fillStyle = "#f00";
-  for (let i = 0; i < bricks.length; i++) {
-    ctx.fillRect(bricks[i].x, bricks[i].y, BRICK_WIDTH, BRICK_HEIGHT);
-  }
+  drawBricks();
 
   // Draw bullets
   ctx.fillStyle = "#0f0"; // Green bullets
@@ -194,7 +318,7 @@ function gameLoop() {
   if (isGameOver || isPaused) return;
   update();
   draw();
-  requestAnimationFrame(gameLoop);
+  gameLoopId = requestAnimationFrame(gameLoop);
 }
 
 function resizeCanvas() {
@@ -217,7 +341,7 @@ window.addEventListener("load", resizeCanvas);
 window.addEventListener("resize", resizeCanvas);
 
 // Spawn bricks every 2 seconds
-setInterval(spawnBrick, 2000);
+brickSpawnInterval = setInterval(spawnBrick, 2000);
 
 // Start the game
 gameLoop();
