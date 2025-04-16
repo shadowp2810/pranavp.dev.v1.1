@@ -1,15 +1,11 @@
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
-// Normalize speeds based on canvas size
-const ballSpeedFactor = 0.005; // Ball speed as a fraction of canvas width
-const paddleSpeedFactor = 0.01; // Paddle speed as a fraction of canvas width
-
 // Ball properties
 let ballX = canvas.width / 2;
 let ballY = canvas.height - 30;
-let ballDX = canvas.width * ballSpeedFactor; // Ball horizontal speed
-let ballDY = canvas.height * ballSpeedFactor; // Ball vertical speed
+let ballDX = 3.5;
+let ballDY = 3.5;
 const ballRadius = 10;
 const halfBallRadius = ballRadius / 2;
 
@@ -17,7 +13,7 @@ const halfBallRadius = ballRadius / 2;
 const paddleHeight = 10;
 const paddleWidth = 95;
 let paddleX = (canvas.width - paddleWidth) / 2;
-const paddleDX = canvas.width * paddleSpeedFactor; // Paddle speed
+const paddleDX = 7;
 
 // Brick properties
 const brickRowCount = 3;
@@ -27,8 +23,6 @@ const brickHeight = 20;
 const brickPadding = 10;
 const brickOffsetTop = 30;
 const brickOffsetLeft = 30;
-
-let lastTime = 0; // Track the time of the previous frame
 
 // Bricks array
 const bricks = [];
@@ -49,6 +43,12 @@ let timerInterval;
 // Key controls
 let rightPressed = false;
 let leftPressed = false;
+
+// Fixed time step variables
+const fps = 60; // Target frame rate (60Hz)
+const frameDuration = 1000 / fps; // Duration of each frame in milliseconds (16.67ms)
+let lastFrameTime = 0; // Time of the last frame
+let accumulatedTime = 0; // Accumulated time since the last game update
 
 // Touch controls
 const leftBtn = document.getElementById("leftBtn");
@@ -224,6 +224,70 @@ function collisionDetection() {
   }
 }
 
+// Game loop
+function gameLoop(timestamp = 0) {
+  if (isPaused || isGameOver) return;
+
+  if (!lastFrameTime) lastFrameTime = timestamp;
+  const deltaTime = timestamp - lastFrameTime;
+  lastFrameTime = timestamp;
+  accumulatedTime += deltaTime;
+
+  while (accumulatedTime >= frameDuration) {
+    updateGameLogic(); // Update game logic at a fixed interval
+    accumulatedTime -= frameDuration;
+  }
+
+  render();
+  requestAnimationFrame(gameLoop);
+}
+
+function updateGameLogic() {
+  // Ball movement
+  if (
+    ballX + ballDX > canvas.width - ballRadius ||
+    ballX + ballDX < ballRadius
+  ) {
+    ballDX = -ballDX;
+  }
+  if (ballY + ballDY < ballRadius) {
+    ballDY = -ballDY;
+  } else if (ballY + ballDY > canvas.height - ballRadius) {
+    if (ballX > paddleX && ballX < paddleX + paddleWidth) {
+      ballDY = -ballDY;
+    } else {
+      endGame("Game Over!");
+    }
+  }
+
+  ballX += ballDX;
+  ballY += ballDY;
+
+  // Paddle movement
+  if (rightPressed && paddleX < canvas.width - paddleWidth) {
+    paddleX += paddleDX;
+  } else if (leftPressed && paddleX > 0) {
+    paddleX -= paddleDX;
+  }
+}
+
+function render() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  drawBricks();
+  drawBall();
+  drawPaddle();
+  collisionDetection();
+}
+
+// End game
+function endGame(message) {
+  isGameOver = true;
+  clearInterval(timerInterval);
+  const messageElement = document.getElementById("message");
+  messageElement.textContent = `${message} Time: ${timer} ms, Score: ${score}`;
+  messageElement.style.visibility = "visible"; // Make the message visible
+}
+
 // Update score
 function updateScore() {
   document.getElementById("score").textContent = `Score: ${score}`;
@@ -244,93 +308,6 @@ function startTimer() {
   }, 10); // Update every 10 ms
 }
 
-// End game
-function endGame(message) {
-  isGameOver = true;
-  clearInterval(timerInterval);
-  const messageElement = document.getElementById("message");
-  messageElement.textContent = `${message} Time: ${timer} ms, Score: ${score}`;
-  messageElement.style.visibility = "visible"; // Make the message visible
-}
-
-// Update canvas size for DPR
-function updateCanvasSize() {
-  const dpr = window.devicePixelRatio || 1; // Get the device pixel ratio
-  const rect = canvas.getBoundingClientRect(); // Get the CSS size of the canvas
-
-  // Set the canvas width and height based on DPR
-  canvas.width = rect.width * dpr;
-  canvas.height = rect.height * dpr;
-
-  // Scale the canvas context to match the DPR
-  ctx.scale(dpr, dpr);
-}
-
-function updateSpeeds() {
-  ballDX = canvas.width * ballSpeedFactor;
-  ballDY = canvas.height * ballSpeedFactor;
-  paddleDX = canvas.width * paddleSpeedFactor;
-}
-
-// Handle canvas resizing
-window.addEventListener("resize", () => {
-  updateCanvasSize(); // Adjust canvas size if needed
-  updateSpeeds(); // Recalculate speeds
-});
-
-// Game loop
-function draw(timestamp = 0) {
-  if (isPaused || isGameOver) return;
-
-  // Handle the first frame
-  if (!lastTime) {
-    lastTime = timestamp;
-  }
-
-  // Calculate delta time (in seconds)
-  let deltaTime = (timestamp - lastTime) / 1000; // Convert milliseconds to seconds
-  lastTime = timestamp;
-
-  // Clamp deltaTime to prevent it from being too small
-  const maxDeltaTime = 1 / 60; // Maximum delta time for 60 FPS
-  deltaTime = Math.min(deltaTime, maxDeltaTime);
-
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  drawBricks();
-  drawBall();
-  drawPaddle();
-  collisionDetection();
-
-  // Ball movement
-  if (
-    ballX + ballDX * deltaTime > canvas.width - ballRadius ||
-    ballX + ballDX * deltaTime < ballRadius
-  ) {
-    ballDX = -ballDX;
-  }
-  if (ballY + ballDY * deltaTime < ballRadius) {
-    ballDY = -ballDY;
-  } else if (ballY + ballDY * deltaTime > canvas.height - ballRadius) {
-    if (ballX > paddleX && ballX < paddleX + paddleWidth) {
-      ballDY = -ballDY;
-    } else {
-      endGame("Game Over!");
-    }
-  }
-
-  ballX += ballDX * deltaTime;
-  ballY += ballDY * deltaTime;
-
-  // Paddle movement
-  if (rightPressed && paddleX < canvas.width - paddleWidth) {
-    paddleX += paddleDX * deltaTime;
-  } else if (leftPressed && paddleX > 0) {
-    paddleX -= paddleDX * deltaTime;
-  }
-
-  requestAnimationFrame(draw);
-}
-
 // Pause/Resume button
 document.getElementById("pauseResumeBtn").addEventListener("click", () => {
   isPaused = !isPaused;
@@ -339,7 +316,7 @@ document.getElementById("pauseResumeBtn").addEventListener("click", () => {
     ? "Resume"
     : "Pause";
 
-  if (!isPaused) draw();
+  if (!isPaused) requestAnimationFrame(gameLoop);
 });
 
 // Restart button
@@ -353,8 +330,11 @@ document.getElementById("homeBtn").addEventListener("click", () => {
 });
 
 // Initialize the game
-updateCanvasSize();
-updateSpeeds();
-setIndestructibleBrick();
-startTimer();
-requestAnimationFrame(draw);
+function initializeGame() {
+  setIndestructibleBrick();
+  startTimer();
+  requestAnimationFrame(gameLoop);
+}
+
+// Start the game
+initializeGame();
