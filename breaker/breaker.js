@@ -1,5 +1,6 @@
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
+
 // Normalize speeds based on canvas size
 const ballSpeedFactor = 0.005; // Ball speed as a fraction of canvas width
 const paddleSpeedFactor = 0.01; // Paddle speed as a fraction of canvas width
@@ -252,6 +253,19 @@ function endGame(message) {
   messageElement.style.visibility = "visible"; // Make the message visible
 }
 
+// Update canvas size for DPR
+function updateCanvasSize() {
+  const dpr = window.devicePixelRatio || 1; // Get the device pixel ratio
+  const rect = canvas.getBoundingClientRect(); // Get the CSS size of the canvas
+
+  // Set the canvas width and height based on DPR
+  canvas.width = rect.width * dpr;
+  canvas.height = rect.height * dpr;
+
+  // Scale the canvas context to match the DPR
+  ctx.scale(dpr, dpr);
+}
+
 function updateSpeeds() {
   ballDX = canvas.width * ballSpeedFactor;
   ballDY = canvas.height * ballSpeedFactor;
@@ -339,6 +353,7 @@ document.getElementById("homeBtn").addEventListener("click", () => {
 });
 
 // Initialize the game
+updateCanvasSize();
 updateSpeeds();
 setIndestructibleBrick();
 startTimer();
