@@ -4,8 +4,8 @@ const ctx = canvas.getContext("2d");
 // Ball properties
 let ballX = canvas.width / 2;
 let ballY = canvas.height - 30;
-let ballDX = 3.5;
-let ballDY = 3.5;
+let ballDX = 3;
+let ballDY = 3;
 const ballRadius = 10;
 const halfBallRadius = ballRadius / 2;
 
@@ -250,8 +250,13 @@ function endGame(message) {
 }
 
 // Game loop
-function draw(timestamp) {
+function draw(timestamp = 0) {
   if (isPaused || isGameOver) return;
+
+  // Handle the first frame
+  if (!lastTime) {
+    lastTime = timestamp;
+  }
 
   // Calculate delta time (in seconds)
   const deltaTime = (timestamp - lastTime) / 1000; // Convert milliseconds to seconds
@@ -285,9 +290,9 @@ function draw(timestamp) {
 
   // Paddle movement
   if (rightPressed && paddleX < canvas.width - paddleWidth) {
-    paddleX += paddleDX * deltaTime * 60;
+    paddleX += paddleDX * deltaTime;
   } else if (leftPressed && paddleX > 0) {
-    paddleX -= paddleDX * deltaTime * 60;
+    paddleX -= paddleDX * deltaTime;
   }
 
   requestAnimationFrame(draw);
