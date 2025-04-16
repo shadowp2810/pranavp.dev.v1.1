@@ -24,6 +24,8 @@ const brickPadding = 10;
 const brickOffsetTop = 30;
 const brickOffsetLeft = 30;
 
+let lastTime = 0; // Track the time of the previous frame
+
 // Bricks array
 const bricks = [];
 for (let c = 0; c < brickColumnCount; c++) {
@@ -248,8 +250,12 @@ function endGame(message) {
 }
 
 // Game loop
-function draw() {
+function draw(timestamp) {
   if (isPaused || isGameOver) return;
+
+  // Calculate delta time (in seconds)
+  const deltaTime = (timestamp - lastTime) / 1000; // Convert milliseconds to seconds
+  lastTime = timestamp;
 
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   drawBricks();
@@ -259,14 +265,14 @@ function draw() {
 
   // Ball movement
   if (
-    ballX + ballDX > canvas.width - ballRadius ||
-    ballX + ballDX < ballRadius
+    ballX + ballDX * deltaTime > canvas.width - ballRadius ||
+    ballX + ballDX * deltaTime < ballRadius
   ) {
     ballDX = -ballDX;
   }
-  if (ballY + ballDY < ballRadius) {
+  if (ballY + ballDY * deltaTime < ballRadius) {
     ballDY = -ballDY;
-  } else if (ballY + ballDY > canvas.height - ballRadius) {
+  } else if (ballY + ballDY * deltaTime > canvas.height - ballRadius) {
     if (ballX > paddleX && ballX < paddleX + paddleWidth) {
       ballDY = -ballDY;
     } else {
@@ -274,14 +280,14 @@ function draw() {
     }
   }
 
-  ballX += ballDX;
-  ballY += ballDY;
+  ballX += ballDX * deltaTime;
+  ballY += ballDY * deltaTime;
 
   // Paddle movement
   if (rightPressed && paddleX < canvas.width - paddleWidth) {
-    paddleX += paddleDX;
+    paddleX += paddleDX * deltaTime * 60;
   } else if (leftPressed && paddleX > 0) {
-    paddleX -= paddleDX;
+    paddleX -= paddleDX * deltaTime * 60;
   }
 
   requestAnimationFrame(draw);
@@ -311,4 +317,4 @@ document.getElementById("homeBtn").addEventListener("click", () => {
 // Initialize the game
 setIndestructibleBrick();
 startTimer();
-draw();
+requestAnimationFrame(draw);
