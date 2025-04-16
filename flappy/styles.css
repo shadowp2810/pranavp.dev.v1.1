@@ -67,7 +67,7 @@ button {
 
 /* Touch Controls */
 #touch-controls {
-  margin-top: 10px;
+  margin-top: 20px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -75,17 +75,26 @@ button {
   width: 100%; /* Ensure the touch controls container spans the full width */
 }
 
-#touch-controls .row {
+/* Main Row: Fire Button and Clover */
+.main-row {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   width: 90%; /* Rows take up 90% of the screen width */
-  max-width: 460px; /* Maximum width for desktop */
-  gap: 10px; /* Space between buttons */
+  max-width: 480px; /* Maximum width for desktop */
+  gap: 10px; /* Space between fire button and clover */
 }
 
-#touch-controls button {
-  flex: 1; /* Buttons fill the available space evenly */
-  padding: 15px 0; /* Adjust padding for a good touch target size */
+/* Fire Button Container */
+#fire-container {
+  flex: 1; /* Fire button takes up space proportionally */
+  display: flex;
+  justify-content: center;
+}
+
+#fireBtn {
+  width: 100%; /* Fire button takes full width of its container */
+  height: 60px; /* Consistent height */
   font-size: 1.2rem;
   border: none;
   border-radius: 5px;
@@ -94,17 +103,90 @@ button {
   cursor: pointer;
   user-select: none;
   text-align: center;
-  height: 60px; /* Ensure a consistent height for all buttons */
-  min-width: 60px; /* Ensure buttons have a minimum width */
 }
 
-#touch-controls button:active {
+#fireBtn:active {
   background-color: #005f8b;
 }
 
-/* Fire Button (Single Button Row) */
-#fireBtn {
-  flex: none; /* Prevent stretching */
-  width: 100%; /* Fire button takes the full width of the row */
-  height: 60px; /* Match the height of other buttons */
+/* Clover Container */
+#clover-container {
+  flex: 2; /* Clover takes up more space than the fire button */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Clover Layout */
+.clover {
+  display: grid;
+  grid-template-rows: repeat(3, 60px); /* Three rows, each 60px tall */
+  grid-template-columns: repeat(3, 60px); /* Three columns, each 60px wide */
+  gap: 5px; /* Space between buttons */
+  justify-items: center; /* Center items horizontally */
+  align-items: center; /* Center items vertically */
+}
+
+.clover-btn {
+  width: 60px;
+  height: 60px;
+  font-size: 1.2rem;
+  border: none;
+  border-radius: 5px;
+  background-color: #0077b5;
+  color: #fff;
+  cursor: pointer;
+  user-select: none;
+  text-align: center;
+}
+
+.clover-btn:active {
+  background-color: #005f8b;
+}
+
+/* Clover Button Positions */
+#upBtn {
+  grid-row: 1; /* First row */
+  grid-column: 2; /* Center column */
+}
+
+#leftBtn {
+  grid-row: 2; /* Middle row */
+  grid-column: 1; /* Left column */
+}
+
+#rightBtn {
+  grid-row: 2; /* Middle row */
+  grid-column: 3; /* Right column */
+}
+
+#downBtn {
+  grid-row: 3; /* Bottom row */
+  grid-column: 2; /* Center column */
+}
+
+/* Swap Button Row */
+.swap-row {
+  margin-top: 10px;
+  width: 90%; /* Take up 90% of the screen width */
+  max-width: 110px; /* Maximum width for desktop */
+  display: flex;
+  justify-content: center;
+}
+
+#swapBtn {
+  width: 100%; /* Full width of the row */
+  height: 50px;
+  font-size: 1rem;
+  border: none;
+  border-radius: 5px;
+  background-color: #0077b5;
+  color: #fff;
+  cursor: pointer;
+  user-select: none;
+  text-align: center;
+}
+
+#swapBtn:active {
+  background-color: #005f8b;
 }

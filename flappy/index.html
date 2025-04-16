@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <h1>UFO Avoidance Game</h1>
+    <h1>Starship Survive</h1>
     <div id="game-container">
       <canvas id="gameCanvas"></canvas>
     </div>
@@ -21,19 +21,23 @@
       Game Over! Your score: <span id="final-score">0</span>
     </div>
     <div id="touch-controls">
-      <!-- Up and Down Buttons -->
-      <div class="row">
-        <button id="upBtn">⬆️</button>
-        <button id="downBtn">⬇️</button>
+      <!-- Main Row: Fire Button on Left, Clover on Right -->
+      <div class="main-row">
+        <div id="fire-container">
+          <button id="fireBtn">Fire / Q</button>
+        </div>
+        <div id="clover-container">
+          <div class="clover">
+            <button id="upBtn" class="clover-btn">⬆️</button>
+            <button id="leftBtn" class="clover-btn">⬅️</button>
+            <button id="rightBtn" class="clover-btn">➡️</button>
+            <button id="downBtn" class="clover-btn">⬇️</button>
+          </div>
+        </div>
       </div>
-      <!-- Left and Right Buttons -->
-      <div class="row">
-        <button id="leftBtn">⬅️</button>
-        <button id="rightBtn">➡️</button>
-      </div>
-      <!-- Fire Button -->
-      <div class="row">
-        <button id="fireBtn">Fire/Q</button>
+      <!-- Swap Button -->
+      <div class="swap-row">
+        <button id="swapBtn">Swap Controls</button>
       </div>
     </div>
     <script src="script.js"></script>

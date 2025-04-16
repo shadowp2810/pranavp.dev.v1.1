@@ -31,6 +31,13 @@ let movingBackward = false;
 let brickSpawnInterval; // Store the interval ID for spawning bricks
 let gameLoopId; // Store the ID for the game loop (requestAnimationFrame)
 
+let lastTime = 0; // Track the time of the previous frame
+
+const fireContainer = document.getElementById("fire-container");
+const cloverContainer = document.getElementById("clover-container");
+const swapBtn = document.getElementById("swapBtn");
+let isFireOnLeft = true;
+
 // Event listeners for keyboard controls
 document.addEventListener("keydown", (e) => {
   if (e.code === "ArrowUp") movingUp = true;
@@ -101,6 +108,19 @@ rightBtn.addEventListener("touchstart", () => (movingForward = true));
 rightBtn.addEventListener("touchend", () => (movingForward = false));
 fireBtn.addEventListener("touchstart", shootBullet);
 
+swapBtn.addEventListener("click", () => {
+  if (isFireOnLeft) {
+    // Move fire button to the right
+    fireContainer.style.order = "2";
+    cloverContainer.style.order = "1";
+  } else {
+    // Move fire button to the left
+    fireContainer.style.order = "1";
+    cloverContainer.style.order = "2";
+  }
+  isFireOnLeft = !isFireOnLeft; // Toggle the position
+});
+
 // Function to restart the game
 function restartGame() {
   // Reset game state
@@ -110,6 +130,7 @@ function restartGame() {
   score = 0;
   isPaused = false;
   pauseResumeBtn.textContent = "Pause";
+  lastTime = 0;
 
   // Set UFO starting position based on perspective
   if (currentPerspective === 0) {
@@ -179,14 +200,16 @@ function shootBullet() {
 }
 
 // Function to update game state
-function update() {
+function update(deltaTime) {
   if (isGameOver || isPaused) return;
 
   // Move UFO
-  if (movingUp && ufoY > 0) ufoY -= BRICK_SPEED; // Move up
-  if (movingDown && ufoY < canvas.height - UFO_SIZE) ufoY += BRICK_SPEED; // Move down
-  if (movingForward && ufoX < canvas.width - UFO_SIZE) ufoX += BRICK_SPEED; // Move right
-  if (movingBackward && ufoX > 0) ufoX -= BRICK_SPEED; // Move left
+  if (movingUp && ufoY > 0) ufoY -= BRICK_SPEED * deltaTime * 100; // Scale movement by deltaTime
+  if (movingDown && ufoY < canvas.height - UFO_SIZE)
+    ufoY += BRICK_SPEED * deltaTime * 100;
+  if (movingForward && ufoX < canvas.width - UFO_SIZE)
+    ufoX += BRICK_SPEED * deltaTime * 100;
+  if (movingBackward && ufoX > 0) ufoX -= BRICK_SPEED * deltaTime * 100;
 
   // Keep UFO within bounds
   if (ufoX < 0) ufoX = 0;
@@ -196,12 +219,14 @@ function update() {
 
   // Move bricks
   for (let i = 0; i < bricks.length; i++) {
-    if (currentPerspective === 0) bricks[i].x -= BRICK_SPEED; // Right-to-Left
+    if (currentPerspective === 0)
+      bricks[i].x -= BRICK_SPEED * deltaTime * 100; // Right-to-Left
     else if (currentPerspective === 1)
-      bricks[i].x += BRICK_SPEED; // Left-to-Right
+      bricks[i].x += BRICK_SPEED * deltaTime * 100; // Left-to-Right
     else if (currentPerspective === 2)
-      bricks[i].y -= BRICK_SPEED; // Bottom-to-Top
-    else if (currentPerspective === 3) bricks[i].y += BRICK_SPEED; // Top-to-Bottom
+      bricks[i].y -= BRICK_SPEED * deltaTime * 100; // Bottom-to-Top
+    else if (currentPerspective === 3)
+      bricks[i].y += BRICK_SPEED * deltaTime * 100; // Top-to-Bottom
 
     // Check for collision with UFO
     const brick = bricks[i]; // Get the current brick
@@ -217,9 +242,9 @@ function update() {
 
   // Remove bricks that are off-screen
   bricks = bricks.filter((brick) => {
-    if (currentPerspective === 0) return brick.x + BRICK_WIDTH > 0; // Right-to-Left
+    if (currentPerspective === 0) return brick.x + brick.width > 0; // Right-to-Left
     if (currentPerspective === 1) return brick.x < canvas.width; // Left-to-Right
-    if (currentPerspective === 2) return brick.y + BRICK_HEIGHT > 0; // Bottom-to-Top
+    if (currentPerspective === 2) return brick.y + brick.height > 0; // Bottom-to-Top
     if (currentPerspective === 3) return brick.y < canvas.height; // Top-to-Bottom
   });
 
@@ -227,16 +252,16 @@ function update() {
   for (let i = 0; i < bullets.length; i++) {
     if (currentPerspective === 0) {
       // Right-to-Left Perspective
-      bullets[i].x += BULLET_SPEED; // Bullets move left to right
+      bullets[i].x += BULLET_SPEED * deltaTime * 100; // Bullets move left to right
     } else if (currentPerspective === 1) {
       // Left-to-Right Perspective
-      bullets[i].x -= BULLET_SPEED; // Bullets move right to left
+      bullets[i].x -= BULLET_SPEED * deltaTime * 100; // Bullets move right to left
     } else if (currentPerspective === 2) {
       // Bottom-to-Top Perspective
-      bullets[i].y += BULLET_SPEED; // Bullets move top to bottom
+      bullets[i].y += BULLET_SPEED * deltaTime * 100; // Bullets move top to bottom
     } else if (currentPerspective === 3) {
       // Top-to-Bottom Perspective
-      bullets[i].y -= BULLET_SPEED; // Bullets move bottom to top
+      bullets[i].y -= BULLET_SPEED * deltaTime * 100; // Bullets move bottom to top
     }
 
     // Check for collision with bricks
@@ -266,7 +291,7 @@ function update() {
   });
 
   // Update score
-  score++;
+  score += deltaTime * 10;
 }
 
 // Function to draw bricks
@@ -301,7 +326,7 @@ function draw() {
   // Draw score
   ctx.fillStyle = "#fff";
   ctx.font = "16px Arial";
-  ctx.fillText(`Score: ${score}`, 10, 20);
+  ctx.fillText(`Score: ${score.toFixed(0)}`, 10, 20); // Round to 0 decimal places
 }
 
 // Game over function
@@ -309,14 +334,25 @@ function gameOver() {
   isGameOver = true;
   const gameOverMessage = document.getElementById("game-over-message");
   const finalScore = document.getElementById("final-score");
-  finalScore.textContent = score;
+  finalScore.textContent = score.toFixed(0);
   gameOverMessage.style.visibility = "visible"; // Show Game Over message
 }
 
 // Game loop
-function gameLoop() {
+function gameLoop(timestamp = 0) {
   if (isGameOver || isPaused) return;
-  update();
+
+  // Handle the first frame
+  if (!lastTime) {
+    lastTime = timestamp; // Initialize lastTime to the current timestamp
+  }
+
+  // Calculate delta time (in seconds)
+  const deltaTime = (timestamp - lastTime) / 1000; // Convert milliseconds to seconds
+  lastTime = timestamp;
+  // Update game state with deltaTime
+  update(deltaTime);
+  // Draw the game
   draw();
   gameLoopId = requestAnimationFrame(gameLoop);
 }
