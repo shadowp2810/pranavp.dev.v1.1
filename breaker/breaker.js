@@ -1,11 +1,14 @@
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
+// Normalize speeds based on canvas size
+const ballSpeedFactor = 0.005; // Ball speed as a fraction of canvas width
+const paddleSpeedFactor = 0.01; // Paddle speed as a fraction of canvas width
 
 // Ball properties
 let ballX = canvas.width / 2;
 let ballY = canvas.height - 30;
-let ballDX = 3;
-let ballDY = 3;
+let ballDX = canvas.width * ballSpeedFactor; // Ball horizontal speed
+let ballDY = canvas.height * ballSpeedFactor; // Ball vertical speed
 const ballRadius = 10;
 const halfBallRadius = ballRadius / 2;
 
@@ -13,7 +16,7 @@ const halfBallRadius = ballRadius / 2;
 const paddleHeight = 10;
 const paddleWidth = 95;
 let paddleX = (canvas.width - paddleWidth) / 2;
-const paddleDX = 7;
+const paddleDX = canvas.width * paddleSpeedFactor; // Paddle speed
 
 // Brick properties
 const brickRowCount = 3;
@@ -249,6 +252,18 @@ function endGame(message) {
   messageElement.style.visibility = "visible"; // Make the message visible
 }
 
+function updateSpeeds() {
+  ballDX = canvas.width * ballSpeedFactor;
+  ballDY = canvas.height * ballSpeedFactor;
+  paddleDX = canvas.width * paddleSpeedFactor;
+}
+
+// Handle canvas resizing
+window.addEventListener("resize", () => {
+  updateCanvasSize(); // Adjust canvas size if needed
+  updateSpeeds(); // Recalculate speeds
+});
+
 // Game loop
 function draw(timestamp = 0) {
   if (isPaused || isGameOver) return;
@@ -324,6 +339,7 @@ document.getElementById("homeBtn").addEventListener("click", () => {
 });
 
 // Initialize the game
+updateSpeeds();
 setIndestructibleBrick();
 startTimer();
 requestAnimationFrame(draw);
