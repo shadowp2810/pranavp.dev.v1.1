@@ -113,10 +113,12 @@ swapBtn.addEventListener("click", () => {
     // Move fire button to the right
     fireContainer.style.order = "2";
     cloverContainer.style.order = "1";
+    cloverContainer.style.justifyContent = "left"; // Align clover to the right
   } else {
     // Move fire button to the left
     fireContainer.style.order = "1";
     cloverContainer.style.order = "2";
+    cloverContainer.style.justifyContent = "right"; // Align clover to the right
   }
   isFireOnLeft = !isFireOnLeft; // Toggle the position
 });
