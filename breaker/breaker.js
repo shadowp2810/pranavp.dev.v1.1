@@ -262,6 +262,10 @@ function draw(timestamp = 0) {
   const deltaTime = (timestamp - lastTime) / 1000; // Convert milliseconds to seconds
   lastTime = timestamp;
 
+  // Clamp deltaTime to prevent it from being too small
+  const maxDeltaTime = 1 / 60; // Maximum delta time for 60 FPS
+  deltaTime = Math.min(deltaTime, maxDeltaTime);
+
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   drawBricks();
   drawBall();
