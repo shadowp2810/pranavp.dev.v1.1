@@ -1,4 +1,11 @@
 /* General styles */
+html,
+body {
+  touch-action: manipulation; /* Prevents double-tap zoom */
+  -webkit-user-select: none; /* Prevents text selection */
+  user-select: none; /* Prevents text selection */
+}
+
 body {
   margin: 0;
   padding: 0;
