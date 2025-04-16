@@ -168,46 +168,60 @@ function drawBricks() {
   }
 }
 
-// Collision detection
+// Collision Detection
 function collisionDetection() {
   for (let c = 0; c < brickColumnCount; c++) {
     for (let r = 0; r < brickRowCount; r++) {
       const b = bricks[c][r];
       if (b.status === 1) {
-        // Check if the ball is within the brick's bounding box
+        // Brick boundaries
+        const brickX = b.x;
+        const brickY = b.y;
+        const brickRight = brickX + brickWidth;
+        const brickBottom = brickY + brickHeight;
+
+        // Ball's next position
+        const ballNextX = ballX + ballDX;
+        const ballNextY = ballY + ballDY;
+
+        // Check if the ball is colliding with the brick
         if (
-          ballX + halfBallRadius > b.x && // Ball's right edge is past the brick's left edge
-          ballX - halfBallRadius < b.x + brickWidth && // Ball's left edge is before the brick's right edge
-          ballY + halfBallRadius > b.y && // Ball's bottom edge is past the brick's top edge
-          ballY - halfBallRadius < b.y + brickHeight // Ball's top edge is before the brick's bottom edge
+          ballNextX + ballRadius > brickX && // Ball's right edge is past the brick's left edge
+          ballNextX - ballRadius < brickRight && // Ball's left edge is before the brick's right edge
+          ballNextY + ballRadius > brickY && // Ball's bottom edge is past the brick's top edge
+          ballNextY - ballRadius < brickBottom // Ball's top edge is before the brick's bottom edge
         ) {
           if (b.indestructible) {
-            // Indestructible brick: Use side collision detection
+            // Handle indestructible brick collision
             const ballBottom = ballY + ballRadius;
             const ballTop = ballY - ballRadius;
             const ballRight = ballX + ballRadius;
             const ballLeft = ballX - ballRadius;
 
-            const brickBottom = b.y + brickHeight;
-            const brickTop = b.y;
-            const brickRight = b.x + brickWidth;
-            const brickLeft = b.x;
+            // Determine the side of the collision
+            const isTopCollision = ballBottom > brickY && ballY < brickY;
+            const isBottomCollision =
+              ballTop < brickBottom && ballY > brickBottom;
+            const isLeftCollision = ballRight > brickX && ballX < brickX;
+            const isRightCollision =
+              ballLeft < brickRight && ballX > brickRight;
 
-            // Check if the collision is on the top or bottom of the brick
-            if (ballBottom > brickTop && ballTop < brickTop) {
-              ballDY = -ballDY; // Reverse vertical direction (top collision)
-            } else if (ballTop < brickBottom && ballBottom > brickBottom) {
-              ballDY = -ballDY; // Reverse vertical direction (bottom collision)
-            }
-
-            // Check if the collision is on the left or right of the brick
-            if (ballRight > brickLeft && ballLeft < brickLeft) {
-              ballDX = -ballDX; // Reverse horizontal direction (left collision)
-            } else if (ballLeft < brickRight && ballRight > brickRight) {
-              ballDX = -ballDX; // Reverse horizontal direction (right collision)
+            // Reverse direction based on the side of the collision
+            if (isTopCollision) {
+              ballDY = -Math.abs(ballDY); // Reverse vertical direction (top collision)
+              ballY = brickY - ballRadius; // Prevent overlap
+            } else if (isBottomCollision) {
+              ballDY = Math.abs(ballDY); // Reverse vertical direction (bottom collision)
+              ballY = brickBottom + ballRadius; // Prevent overlap
+            } else if (isLeftCollision) {
+              ballDX = -Math.abs(ballDX); // Reverse horizontal direction (left collision)
+              ballX = brickX - ballRadius; // Prevent overlap
+            } else if (isRightCollision) {
+              ballDX = Math.abs(ballDX); // Reverse horizontal direction (right collision)
+              ballX = brickRight + ballRadius; // Prevent overlap
             }
           } else {
-            // Normal brick: Simple collision logic
+            // Handle normal brick collision
             ballDY = -ballDY; // Reverse vertical direction
             b.status = 0; // Mark the brick as broken
             score++; // Increase score
