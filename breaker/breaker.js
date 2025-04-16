@@ -259,7 +259,7 @@ function draw(timestamp = 0) {
   }
 
   // Calculate delta time (in seconds)
-  const deltaTime = (timestamp - lastTime) / 1000; // Convert milliseconds to seconds
+  let deltaTime = (timestamp - lastTime) / 1000; // Convert milliseconds to seconds
   lastTime = timestamp;
 
   // Clamp deltaTime to prevent it from being too small
